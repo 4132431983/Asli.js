@@ -1,6 +1,7 @@
 require('dotenv').config();
-const { ethers } = require('ethers');
+
 const { JsonRpcProvider } = require('ethers');
+
 
 
 // Set up your environment variables
