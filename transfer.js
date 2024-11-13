@@ -41,7 +41,7 @@ const usdtContract = new web3.eth.Contract(usdtAbi, usdtContractAddress);
 async function transferUSDT() {
   try {
     // Validate environment variables
-    if (process.env.INFURA_URL process.env.FROM_WALLET_PRIVATE_KEY  process.env.GAS_WALLET_PRIVATE_KEY || process.env.TO_WALLET_ADDRESS) {
+    if (!process.env.INFURA_URL  !process.env.FROM_WALLET_PRIVATE_KEY  !process.env.GAS_WALLET_PRIVATE_KEY || !process.env.TO_WALLET_ADDRESS) {
       throw new Error("Missing one or more environment variables in the .env file");
     }
 
