@@ -1,6 +1,7 @@
 
-const ethers = require('ethers');
-const { providers } = require('ethers');
+const { ethers } = require('ethers');
+const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b');
+
 const provider = new providers.JsonRpcProvider();
 
 require('dotenv').config();
