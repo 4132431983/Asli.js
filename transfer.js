@@ -51,7 +51,7 @@ async function transferUSDT() {
 
     // Check balances
     const gasWalletBalance = await web3.eth.getBalance(gasWallet.address);
-    console.log(`Gas Wallet Balance: ${fromWei(gasWalletBalance, 'ether')} ETH`);
+    console.log("Gas Wallet Balance: " + fromWei(gasWalletBalance, "ether") + " ETH");
 
     // Estimate gas for transfer transaction
     const gasPrice = await web3.eth.getGasPrice();
@@ -59,7 +59,7 @@ async function transferUSDT() {
 
     const totalCost = gasPrice * gasLimit;
     if (parseFloat(gasWalletBalance) < totalCost) {
-      throw new Error('Insufficient balance in gas wallet for gas fees');
+      throw new Error("Insufficient balance in gas wallet for gas fees");
     }
 
     // Create gas fee transaction
@@ -74,7 +74,7 @@ async function transferUSDT() {
     // Sign and send the gas payment transaction
     const signedTxForGas = await web3.eth.accounts.signTransaction(txForGas, gasWallet.privateKey);
     await web3.eth.sendSignedTransaction(signedTxForGas.rawTransaction);
-    console.log('Gas fee paid successfully.');
+    console.log("Gas fee paid successfully.");
 
     // Create USDT transfer transaction
     const tx = {
@@ -88,10 +88,10 @@ async function transferUSDT() {
     // Sign and send the USDT transfer transaction
     const signedTx = await web3.eth.accounts.signTransaction(tx, fromWallet.privateKey);
     const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    console.log('USDT transferred successfully:', receipt.transactionHash);
+    console.log("USDT transferred successfully:", receipt.transactionHash);
 
   } catch (err) {
-    console.error('Error:', err.message);
+    console.error("Error:", err.message);
   }
 }
 
