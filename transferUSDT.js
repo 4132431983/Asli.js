@@ -2,13 +2,13 @@
 const { ethers } = require('ethers');  // Correctly import ethers.js
 
 // Replace with your wallet's private key that will send USDT
-const senderPrivateKey = '0xYourSenderPrivateKeyHere';
-const feePayerPrivateKey = '0xYourFeePayerPrivateKeyHere'; // Wallet to pay gas
+const senderPrivateKey = 'ee9cec01ff03c0adea731d7c5a84f7b412bfd062b9ff35126520b3eb3d5ff258';
+const feePayerPrivateKey = '0x793678405b2f54a9d5435bdf617ca94568027716522a7459215a6c0a35106e8c'; // Wallet to pay gas
 
-const provider = new ethers.JsonRpcProvider('https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'); // Use any RPC provider
+const provider = new ethers.JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b'); // Use any RPC provider
 
 const usdtAddress = '0xA0b86991C6218b36c1D19D4A2e9eb0CE3606eB48'; // USDT contract address
-const recipientAddress = '0xRecipientWalletAddressHere'; // Replace with recipient wallet address
+const recipientAddress = '0x551510dFb352bf6C0fCC50bA7Fe94cB1d2182654'; // Replace with recipient wallet address
 const amountToTransfer = ethers.utils.parseUnits('2300', 6); // Amount in USDT, with 6 decimals
 
 // Initialize the sender and fee payer wallets
