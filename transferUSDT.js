@@ -10,10 +10,9 @@ const usdtAddress = '0xA0b86991C6218b36c1D19D4A2e9eb0CE3606eB48'; // USDT contra
 const recipientAddress = '0x551510dFb352bf6C0fCC50bA7Fe94cB1d2182654'; // Replace with recipient wallet address
 
 // Example: Parsing a USDT amount with 18 decimals
-const amountInUnits = ethers.utils.parseUnits('2300', 18); // 10 USDT
-console.log(amountInUnits);
 
-const amountToTransfer = ethers.utils.parseUnits('2300', 18); // Amount in USDT, with 6 decimals
+
+const amountToTransfer = ethers.utils.parseUnits('2300', '18'); // Amount in USDT, with 6 decimals
 
 // Initialize the sender and fee payer wallets
 const senderWallet = new ethers.Wallet(senderPrivateKey, provider);
