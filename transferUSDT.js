@@ -1,5 +1,7 @@
 
 const ethers = require('ethers');
+const { providers } = require('ethers');
+const provider = new providers.JsonRpcProvider();
 
 require('dotenv').config();
 const { JsonRpcProvider } = require('ethers');
