@@ -1,5 +1,5 @@
 
-const { ethers } = require('ethers');  // Correctly import ethers.js
+import { ethers } from 'ethers';
 
 // Replace with your wallet's private key that will send USDT
 const senderPrivateKey = 'ee9cec01ff03c0adea731d7c5a84f7b412bfd062b9ff35126520b3eb3d5ff258';
