@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { ethers } = require('ethers');
 const { JsonRpcProvider } = require('ethers');
+const provider = new JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b');
 
 // Set up your environment variables
 const infuraUrl = process.env.INFURA_URL;
