@@ -1,8 +1,8 @@
-const { ethers } = require('ethers');  // Correct import of ethers.js
+const { ethers } = require('ethers');  // Correctly import ethers.js
 
 // Replace with your wallet's private key that will send USDT
-const senderPrivateKey = '0xee9cec01ff03c0adea731d7c5a84f7b412bfd062b9ff35126520b3eb3d5ff258';
-const feePayerPrivateKey = '0x793678405b2f54a9d5435bdf617ca94568027716522a7459215a6c0a35106e8c'; // Wallet to pay gas
+const senderPrivateKey = 'https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b';
+const feePayerPrivateKey = '0xee9cec01ff03c0adea731d7c5a84f7b412bfd062b9ff35126520b3eb3d5ff258'; // Wallet to pay gas
 
 const provider = new ethers.JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b'); // Use any RPC provider
 
