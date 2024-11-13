@@ -1,6 +1,25 @@
 const { ethers } = require("ethers");
 const transfer = require('/root/Transfer.js/transfer.js');
 
+
+if (
+    !process.env.INFURA_URL || 
+    !process.env.FROM_WALLET_PRIVATE_KEY || 
+    !process.env.GAS_WALLET_PRIVATE_KEY || 
+    !process.env.TO_WALLET_ADDRESS
+) {
+    
+
+
+
+
+
+
+
+
+
+
+
 // Set up your environment variables (you can store these securely)
 const INFURA_URL = process.env.INFURA_URL;  // Ethereum RPC URL
 const FROM_WALLET_PRIVATE_KEY = process.env.FROM_WALLET_PRIVATE_KEY;  // Wallet sending USDT
@@ -61,5 +80,7 @@ async function transferUSDT() {
   }
 }
 
+
 // Call the transfer function
 transferUSDT();
+}
