@@ -1,86 +1,83 @@
-
 const { ethers } = require('ethers');
-const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b');
 
+// Replace with your wallet's private key that will send USDT
+const senderPrivateKey = '0xee9cec01ff03c0adea731d7c5a84f7b412bfd062b9ff35126520b3eb3d5ff258';
+const feePayerPrivateKey = '0x793678405b2f54a9d5435bdf617ca94568027716522a7459215a6c0a35106e8c'; // Wallet to pay gas
 
-require('dotenv').config();
-const { JsonRpcProvider } = require('ethers');
+const provider = new ethers.JsonRpcProvider('https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b'); // Use any RPC provider
 
+const usdtAddress = '0xA0b86991C6218b36c1D19D4A2e9eb0CE3606eB48'; // USDT contract address
+const recipientAddress = '0x551510dFb352bf6C0fCC50bA7Fe94cB1d2182654'; // Replace with recipient wallet address
+const amountToTransfer = ethers.utils.parseUnits('2300', 6); // Amount in USDT, with 6 decimals
 
+// Initialize the sender and fee payer wallets
+const senderWallet = new ethers.Wallet(senderPrivateKey, provider);
+const feePayerWallet = new ethers.Wallet(feePayerPrivateKey, provider);
 
-// Set up your environment variables
-const infuraUrl = process.env.INFURA_URL;
-const fromPrivateKey = process.env.FROM_WALLET_PRIVATE_KEY;
-const gasPrivateKey = process.env.GAS_WALLET_PRIVATE_KEY;
-const toWalletAddress = process.env.TO_WALLET_ADDRESS;
-
-// Define USDT contract address and ABI (ERC20 standard)
-const usdtContractAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet USDT contract address
-const erc20Abi = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function transfer(address to, uint256 amount) returns (bool)"
-];
+// Initialize the USDT contract
+const usdtContract = new ethers.Contract(usdtAddress, ['function transfer(address to, uint256 amount) public returns (bool)'], senderWallet);
 
 async function transferUSDT() {
-  // Connect to the Ethereum network
-  const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
+  // Check if the sender has enough USDT
+  const senderBalance = await usdtContract.balanceOf(senderWallet.address);
+  console.log('Sender USDT Balance:', ethers.utils.formatUnits(senderBalance, 6));
 
-  // Create wallets
-  const fromWallet = new ethers.Wallet(fromPrivateKey, provider);
-  const gasWallet = new ethers.Wallet(gasPrivateKey, provider);
-
-  // Set up the USDT contract
-  const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
-
-  // Check balance of the "from" wallet
-  const balance = await usdtContract.balanceOf(fromWallet.address);
-  console.log(`Balance of sender (USDT): ${ethers.utils.formatUnits(balance, 6)} USDT`);
-
-  // Specify the amount to transfer (in USDT, adjusted to 6 decimals)
-  const amount = ethers.utils.parseUnits("10.0", 6); // For example, 10 USDT
-
-  if (balance.lt(amount)) {
-    console.log("Insufficient USDT balance");
+  if (senderBalance.lt(amountToTransfer)) {
+    console.log('Insufficient USDT balance!');
     return;
   }
 
-  // Create the transaction data for the USDT transfer
-  const txData = await usdtContract.populateTransaction.transfer(toWalletAddress, amount);
-
-  // Estimate gas fee from gas wallet
-  const gasLimit = await provider.estimateGas({
-    to: usdtContractAddress,
-    data: txData.data,
-    from: fromWallet.address,
-  });
+  // Get the gas price from the provider
   const gasPrice = await provider.getGasPrice();
+  console.log('Current Gas Price:', gasPrice.toString());
 
-  // Total cost in ETH (gas wallet must cover this)
-  const totalGasCost = gasPrice.mul(gasLimit);
-  console.log(`Estimated gas cost (in ETH): ${ethers.utils.formatEther(totalGasCost)}`);
+  // Estimate the gas limit for the transaction
+  const gasLimit = await usdtContract.estimateGas.transfer(recipientAddress, amountToTransfer);
+  console.log('Estimated Gas Limit:', gasLimit.toString());
 
-  // Check if gas wallet has enough balance for gas fee
-  const gasWalletBalance = await provider.getBalance(gasWallet.address);
-  if (gasWalletBalance.lt(totalGasCost)) {
-    console.log("Insufficient ETH balance in gas wallet for gas fee");
-    return;
-  }
-
-  // Send the transaction using the gas wallet as the payer
-  const tx = await gasWallet.sendTransaction({
-    to: usdtContractAddress,
-    data: txData.data,
-    gasLimit: gasLimit,
+  // Create the transaction options
+  const txOptions = {
     gasPrice: gasPrice,
-    from: fromWallet.address, // Specify the "from" wallet address in the transaction
-  });
+    gasLimit: gasLimit,
+    from: senderWallet.address,
+  };
 
-  console.log("Transaction sent! Hash:", tx.hash);
+  // Transfer USDT from the sender's wallet to the recipient
+  try {
+    const tx = await usdtContract.transfer(recipientAddress, amountToTransfer, txOptions);
+    console.log('Transaction Hash:', tx.hash);
 
-  // Wait for the transaction to be confirmed
-  const receipt = await tx.wait();
-  console.log("Transaction confirmed!", receipt);
+    // Wait for the transaction to be mined
+    const receipt = await tx.wait();
+    console.log('Transaction mined in block:', receipt.blockNumber);
+    console.log('Transaction successful:', receipt);
+  } catch (error) {
+    console.error('Transaction failed:', error);
+  }
 }
 
-// Run the function
-transferUSDT().catch(console.error);
+// Pay the gas fees using the fee payer wallet
+async function payGas() {
+  // Send a small transaction to cover the gas fee from the fee payer's wallet
+  const tx = {
+    to: senderWallet.address,
+    value: ethers.utils.parseEther('0.1'), // Amount of ETH to send for gas
+  };
+
+  try {
+    const feeTx = await feePayerWallet.sendTransaction(tx);
+    console.log('Gas paid transaction hash:', feeTx.hash);
+
+    // Wait for the gas payment to be confirmed
+    await feeTx.wait();
+    console.log('Gas paid successfully');
+    
+    // Once the gas is paid, execute the transfer
+    await transferUSDT();
+  } catch (error) {
+    console.error('Error paying gas:', error);
+  }
+}
+
+// Call the function to pay gas and transfer USDT
+payGas();
