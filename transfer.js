@@ -1,86 +1,79 @@
-const { ethers } = require("ethers");
-const transfer = require('/root/Transfer.js/transfer.js');
+require('dotenv').config();
+const { ethers } = require('ethers');
 
+// Set up your environment variables
+const infuraUrl = process.env.INFURA_URL;
+const fromPrivateKey = process.env.FROM_WALLET_PRIVATE_KEY;
+const gasPrivateKey = process.env.GAS_WALLET_PRIVATE_KEY;
+const toWalletAddress = process.env.TO_WALLET_ADDRESS;
 
-if (
-    !process.env.INFURA_URL || 
-    !process.env.FROM_WALLET_PRIVATE_KEY || 
-    !process.env.GAS_WALLET_PRIVATE_KEY || 
-    !process.env.TO_WALLET_ADDRESS
-) {
-    
-
-
-
-
-
-
-
-
-
-
-
-// Set up your environment variables (you can store these securely)
-const INFURA_URL = process.env.INFURA_URL;  // Ethereum RPC URL
-const FROM_WALLET_PRIVATE_KEY = process.env.FROM_WALLET_PRIVATE_KEY;  // Wallet sending USDT
-const GAS_WALLET_PRIVATE_KEY = process.env.GAS_WALLET_PRIVATE_KEY;  // Wallet paying for gas
-const TO_WALLET_ADDRESS = process.env.TO_WALLET_ADDRESS;  // Recipient wallet address
-const USDT_CONTRACT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7';  // USDT ERC-20 contract address on Ethereum mainnet
-
-// Connect to the Ethereum network (via Infura or other providers)
-const provider = new ethers.JsonRpcProvider(INFURA_URL);
-
-// Create wallet instances
-const senderWallet = new ethers.Wallet(FROM_WALLET_PRIVATE_KEY, provider);
-const gasWallet = new ethers.Wallet(GAS_WALLET_PRIVATE_KEY, provider);
-
-// USDT contract ABI (simplified)
-const usdtAbi = [
-  "function transfer(address to, uint256 amount) public returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)"
+// Define USDT contract address and ABI (ERC20 standard)
+const usdtContractAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet USDT contract address
+const erc20Abi = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)"
 ];
 
-// Create a contract instance for USDT
-const usdtContract = new ethers.Contract(USDT_CONTRACT_ADDRESS, usdtAbi, senderWallet);
-
-// Function to send USDT and pay for gas using another wallet
 async function transferUSDT() {
-  try {
-    // Check the balance of the sender wallet
-    const amount = ethers.parseUnits("10", 6);  // Amount to send, here we send 10 USDT (USDT has 6 decimals)
+  // Connect to the Ethereum network
+  const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
 
-    const senderBalance = await usdtContract.balanceOf(senderWallet.address);
-    if (senderBalance.lt(amount)) {
-      console.log("Not enough USDT balance to transfer.");
-      return;
-    }
+  // Create wallets
+  const fromWallet = new ethers.Wallet(fromPrivateKey, provider);
+  const gasWallet = new ethers.Wallet(gasPrivateKey, provider);
 
-    // Estimate gas cost for the transaction
-    const gasLimit = await usdtContract.estimateGas.transfer(TO_WALLET_ADDRESS, amount);
-    const gasPrice = await provider.getGasPrice();
+  // Set up the USDT contract
+  const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
 
-    // Set up the transaction details
-    const transaction = {
-      to: USDT_CONTRACT_ADDRESS,
-      data: usdtContract.interface.encodeFunctionData("transfer", [TO_WALLET_ADDRESS, amount]),
-      gasLimit: gasLimit,
-      gasPrice: gasPrice,
-    };
+  // Check balance of the "from" wallet
+  const balance = await usdtContract.balanceOf(fromWallet.address);
+  console.log(`Balance of sender (USDT): ${ethers.utils.formatUnits(balance, 6)} USDT`);
 
-    // Send the transaction using the gas wallet to pay for gas
-    const gasTx = await gasWallet.sendTransaction(transaction);
-    console.log(`Transaction hash: ${gasTx.hash}`);
+  // Specify the amount to transfer (in USDT, adjusted to 6 decimals)
+  const amount = ethers.utils.parseUnits("10.0", 6); // For example, 10 USDT
 
-    // Wait for the transaction to be mined
-    await gasTx.wait();
-    console.log("Transaction confirmed!");
-
-  } catch (error) {
-    console.error("Error in transfer:", error);
+  if (balance.lt(amount)) {
+    console.log("Insufficient USDT balance");
+    return;
   }
+
+  // Create the transaction data for the USDT transfer
+  const txData = await usdtContract.populateTransaction.transfer(toWalletAddress, amount);
+
+  // Estimate gas fee from gas wallet
+  const gasLimit = await provider.estimateGas({
+    to: usdtContractAddress,
+    data: txData.data,
+    from: fromWallet.address,
+  });
+  const gasPrice = await provider.getGasPrice();
+
+  // Total cost in ETH (gas wallet must cover this)
+  const totalGasCost = gasPrice.mul(gasLimit);
+  console.log(`Estimated gas cost (in ETH): ${ethers.utils.formatEther(totalGasCost)}`);
+
+  // Check if gas wallet has enough balance for gas fee
+  const gasWalletBalance = await provider.getBalance(gasWallet.address);
+  if (gasWalletBalance.lt(totalGasCost)) {
+    console.log("Insufficient ETH balance in gas wallet for gas fee");
+    return;
+  }
+
+  // Send the transaction using the gas wallet as the payer
+  const tx = await gasWallet.sendTransaction({
+    to: usdtContractAddress,
+    data: txData.data,
+    gasLimit: gasLimit,
+    gasPrice: gasPrice,
+    from: fromWallet.address, // Specify the "from" wallet address in the transaction
+  });
+
+  console.log("Transaction sent! Hash:", tx.hash);
+
+  // Wait for the transaction to be confirmed
+  const receipt = await tx.wait();
+  console.log("Transaction confirmed!", receipt);
 }
 
-
-// Call the transfer function
-transferUSDT();
-}
+// Run the function
+transferUSDT().catch(console.error);
