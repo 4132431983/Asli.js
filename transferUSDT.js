@@ -85,7 +85,7 @@ payGas();
 
 
 
-const { ethers } = require('ethers');  // Correctly import ethers.js
+
 
 // Replace with your wallet's private key that will send USDT
 const senderPrivateKey = 'https://mainnet.infura.io/v3/d078940287f845e5afe7e016bb49369b';
